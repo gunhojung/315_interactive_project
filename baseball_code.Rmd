@@ -23,3 +23,29 @@ raw <- mutate(raw,
               SitStr = (SB*SB_point) + (CS*CS_point) +
                 (SH*SH_point) + (SF*SF_point) + (IBB*IBB_point))
 ```
+
+# Situational Strategies and Ranking
+```{r}
+team_SitStr_stats <- raw %>%
+  group_by(Team) %>%
+  summarise(mean_SitStr = mean(SitStr),
+            run = mean(R))
+new_stats <- left_join(team_SitStr_stats, raw, by = c("Team" = "Team"))
+levels(new_stats$League) <- c("American League", "National League")
+```
+
+#  Visualization of the dataset (Situational Strategy and Run comparison)
+```{r}
+ggplot(data = new_stats, aes(x = mean_SitStr, y = run, color = League)) +
+  geom_text(aes(label = Team), size = 3) +
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_wrap(~ League) +
+  geom_point(aes(x = mean(mean_SitStr), y = mean(run)), color = "black") +
+  theme(legend.position = "none") +
+  labs(title = "Does Implementation of Situational Strategy work?",
+       subtitle = "each point represents the average of 10 seasons (2008-2017)",
+       caption = "Source: baseball-reference.com",
+       x = "Average Runs earned from Situational Strategy",
+       y = "Average Run scored")
+```
+
