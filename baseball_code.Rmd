@@ -1,0 +1,24 @@
+---
+title: "interactive_project"
+output: html_document
+---
+```{r}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+#  Recalling Raw Baseball Dataset of 10 years
+raw <- read.csv("https://raw.githubusercontent.com/gunhojung/315_interactive_project/master/baseball_data.csv", header = TRUE)
+
+#  Creating a conglomerated function that defines "Situational Strategy"
+Out_point <- mean(raw$RPG)/27
+SO_point <- Out_point
+SF_point <- 1-Out_point
+SH_point <- 0.25-Out_point
+CS_point <- Out_point
+SB_point <- 0.25
+IBB_point <- 0.25
+raw <- mutate(raw,
+              SitStr = (SB*SB_point) + (CS*CS_point) + (SO*SO_point) + 
+                (SH*SH_point) + (SF*SF_point) + (IBB*IBB_point))
+```
+
