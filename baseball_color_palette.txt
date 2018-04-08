@@ -1,0 +1,4 @@
+orange: #ff6600
+light blue: #0e58c4
+dark blue: #072c62
+dark orange: #e55f0
