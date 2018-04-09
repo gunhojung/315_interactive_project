@@ -16,7 +16,7 @@ raw <- read.csv("https://raw.githubusercontent.com/gunhojung/315_interactive_pro
 Out_point <- mean(raw$RPG)/27
 SF_point <- 1-Out_point
 SH_point <- 0.25-Out_point
-CS_point <- -Out_point
+CS_point <- -0.25-Out_point
 SB_point <- 0.25
 IBB_point <- 0.25
 raw <- mutate(raw,
