@@ -14,15 +14,33 @@ raw <- read.csv("https://raw.githubusercontent.com/gunhojung/315_interactive_pro
 #  Creating a conglomerated function that defines "Situational Strategy" called SitStr and append this variable into the dataset
 ```{r}
 Out_point <- mean(raw$RPG)/27
-SF_point <- 1-Out_point
-SH_point <- 0.25-Out_point
-CS_point <- -0.25-Out_point
+SF_point <- 1 - Out_point
+SH_point <- 0.25 - Out_point
+CS_point <- -0.25 -Out_point
 SB_point <- 0.25
 IBB_point <- 0.25
 raw <- mutate(raw,
               SitStr = (SB*SB_point) + (CS*CS_point) +
                 (SH*SH_point) + (SF*SF_point) + (IBB*IBB_point))
 ```
+
+*  The Situational Strategy value represents how much runs each team was able to earn by taking specific strategies during the game. It is one conglomerated value that is calculated from the sum of 5 different variables weighted differently. 
+5 variables are Sacrifice Fly(SF), Sacrifice Hit(SH), Stolen Bases(SB), Caught Stealing(CS), and Intentional Base on Balls(IBB).
+
+*  In order to assign different weights to these five variables, it is crucial to calculate how these variables contribute to Total Run earned by each team. Because each team generally plays total of 27 outs in one game, by dividing 27 to the mean of Run Per Game throughout 10 seasons, we can calculate how much runs are earned within one-out count. We call this value Out_point.
+
+*  In order to calculate how Sacrifice Fly contributed to the Total Run, we created a new variable called SF_point which is defined as 1 - Out_point. The rationale for this formula is that in order to earn one run, teams have to give up their one-out count. The weight for the Sacrifice Fly is 0.838. 
+
+*  In order to calculate how Sacrifice Hit contributed to the Total Run, we created a new variable called SH_point which is defined as 0.25 - Out_point. With one Sacrifice Hit, teams can proceed to next base by giving out one out-count. Since proceeding to all 4 bases results in positive 1 run gain, each base is calculated to be 0.25 run. Thus, the weight for the Sacrifice Hit is 0.0875.
+
+*  In order to calculate how Stolen Base contributed to the Total Run, we created a new variable called SB_point. The weight for this variable is 0.25 since one extra base is gained by stealing one base. 
+
+*  In order to calculate how Caught Stealing contributed to the Total Run, we created a new variable called CS_point. The weight for this variable is -(0.25 + Out_point) since teams lose 0.25 runs for losing one base and lose Out_point runs for one-out count. Thus, the weight for this variable is -0.412.
+
+*  In order to calculate how Intentional Base on Balls contributed to the Total Run, we created a new variable called IBB_point. The weight for this variable is 0.25 since one extra base is gained.
+
+*  By taking account of these weights on the values of 5 different variables, we created a new variable called SitStr (Situational Strategy) that represents among total number runs, how many runs teams were able to earn through implementing situational strategies. 
+ 
 
 # Situational Strategies and Ranking
 ```{r}
@@ -31,7 +49,8 @@ team_SitStr_stats <- raw %>%
   summarise(mean_SitStr = mean(SitStr),
             run = mean(R),
             rank = mean(Ranking),
-            playoff = sum(Playoff))
+            playoff = sum(Playoff),
+            SitStrprop = (mean_SitStr/run)*100)
 new_stats <- left_join(team_SitStr_stats, raw, by = c("Team" = "Team"))
 levels(new_stats$League) <- c("American League", "National League")
 new_stats
@@ -39,33 +58,37 @@ new_stats
 
 #  Visualization of the dataset (Situational Strategy and Run comparison)
 ```{r}
-ggplot(data = new_stats, aes(x = mean_SitStr, y = run, color = League)) +
-  geom_text(aes(label = Team), size = 3) +
+ggplot(data = new_stats, aes(x = SitStrprop, y = run, color = League)) +
   geom_smooth(method = "lm", se = FALSE) +
-  facet_wrap(~ League) +
-  geom_point(aes(x = mean(mean_SitStr), y = mean(run)), color = "black") +
-  theme(legend.position = "none") +
+  stat_density2d(aes(fill = ..density..), geom = "tile",
+                contour = FALSE) +
+  scale_fill_gradient2(low = "white", high = "#ff8c00", mid = "#4682B4", midpoint = 0.004) +
+  geom_point(size = 3) +
+  #facet_wrap(~League) +
+  geom_smooth(method = "gam", span = 1) +
+  #theme(legend.position = "none") +
   labs(title = "Does Implementation of Situational Strategy work?",
        subtitle = "each point represents the average of 10 seasons (2008-2017)",
        caption = "Source: baseball-reference.com",
-       x = "Average Runs earned from Situational Strategy",
-       y = "Average Run scored")
+       x = "Reliance on Situational Strategy to earn runs (%)",
+       y = "Average of Total Runs scored") +
+  theme_bw()
 ```
 
 # Situational Strategy and Season Ranking
 ```{r}
-ggplot(data = new_stats, aes(x = mean_SitStr, y = rank)) +
+ggplot(data = new_stats, aes(x = SitStrprop, y = rank)) +
   #stat_density2d(aes(fill = ..density..), geom = "tile",
                 #contour = FALSE, h = c(10,1)) +
   #scale_fill_gradient(low = "white", high = "yellow") +
   geom_text(aes(label = Team, color = League)) +
-  geom_smooth(method = "lm", se = FALSE, aes(color = League)) +
+  geom_smooth(method = "lm", se = TRUE, aes(color = League)) +
   facet_wrap(~ League) +
   theme(legend.position = "none") +
-  labs(title = "Correlation between Situational Strategy and overall Ranking",
+  labs(title = "Correlation between Situational Strategy Reliance and overall Ranking",
        subtitle = "each team's ranking is calculated by the average of 10 seasons (2008-2017)",
        caption = "Source: baseball-reference.com",
-       x = "Runs earned by Situational Strategy",
+       x = "Reliance on Situational Strategy to earn runs (%)",
        y = "10 seasons of overall Ranking") +
   theme_bw() +
   theme(legend.position = "none")
@@ -73,20 +96,20 @@ ggplot(data = new_stats, aes(x = mean_SitStr, y = rank)) +
 
 # Situational Strategy and Post-Season
 ```{r}
-ggplot(data = new_stats, aes(x = mean_SitStr, y = playoff)) +
+ggplot(data = new_stats, aes(x = SitStrprop, y = playoff)) +
   #stat_density2d(aes(fill = ..density..), geom = "tile",
                 #contour = FALSE, h = c(10,1)) +
   #scale_fill_gradient(low = "white", high = "yellow") +
-  geom_point(aes(color = League)) +
-  geom_smooth(method = "lm", se = FALSE, aes(color = League)) +
-  facet_wrap(~ League) +
+  geom_point(aes(color = League), alpha = 0.5) +
+  geom_smooth(method = "lm", se = TRUE, aes(color = League)) +
+  #facet_wrap(~ League) +
   theme(legend.position = "none") +
-  labs(title = "Correlation between Situational Strategy and Play-Off Qualification",
+  labs(title = "Correlation between Situational Strategy Reliance and Play-Off Qualification",
        subtitle = "Number of times each team qualified to Play-Off (2008-2017)",
        caption = "Source: baseball-reference.com",
-       x = "Runs earned by Situational Strategy",
-       y = "Number of Play-Off") +
+       x = "Reliance on Situational Strategy to earn runs (%)",
+       y = "Number of times qualified to the Play-Off") +
   theme_bw() +
-  theme(legend.position = "none")
+  theme(legend.position = "bottom")
 ```
 
