@@ -29,9 +29,12 @@ raw <- mutate(raw,
 team_SitStr_stats <- raw %>%
   group_by(Team) %>%
   summarise(mean_SitStr = mean(SitStr),
-            run = mean(R))
+            run = mean(R),
+            rank = mean(Ranking),
+            playoff = sum(Playoff))
 new_stats <- left_join(team_SitStr_stats, raw, by = c("Team" = "Team"))
 levels(new_stats$League) <- c("American League", "National League")
+new_stats
 ```
 
 #  Visualization of the dataset (Situational Strategy and Run comparison)
@@ -47,5 +50,43 @@ ggplot(data = new_stats, aes(x = mean_SitStr, y = run, color = League)) +
        caption = "Source: baseball-reference.com",
        x = "Average Runs earned from Situational Strategy",
        y = "Average Run scored")
+```
+
+# Situational Strategy and Season Ranking
+```{r}
+ggplot(data = new_stats, aes(x = mean_SitStr, y = rank)) +
+  #stat_density2d(aes(fill = ..density..), geom = "tile",
+                #contour = FALSE, h = c(10,1)) +
+  #scale_fill_gradient(low = "white", high = "yellow") +
+  geom_text(aes(label = Team, color = League)) +
+  geom_smooth(method = "lm", se = FALSE, aes(color = League)) +
+  facet_wrap(~ League) +
+  theme(legend.position = "none") +
+  labs(title = "Correlation between Situational Strategy and overall Ranking",
+       subtitle = "each team's ranking is calculated by the average of 10 seasons (2008-2017)",
+       caption = "Source: baseball-reference.com",
+       x = "Runs earned by Situational Strategy",
+       y = "10 seasons of overall Ranking") +
+  theme_bw() +
+  theme(legend.position = "none")
+```
+
+# Situational Strategy and Post-Season
+```{r}
+ggplot(data = new_stats, aes(x = mean_SitStr, y = playoff)) +
+  #stat_density2d(aes(fill = ..density..), geom = "tile",
+                #contour = FALSE, h = c(10,1)) +
+  #scale_fill_gradient(low = "white", high = "yellow") +
+  geom_point(aes(color = League)) +
+  geom_smooth(method = "lm", se = FALSE, aes(color = League)) +
+  facet_wrap(~ League) +
+  theme(legend.position = "none") +
+  labs(title = "Correlation between Situational Strategy and Play-Off Qualification",
+       subtitle = "Number of times each team qualified to Play-Off (2008-2017)",
+       caption = "Source: baseball-reference.com",
+       x = "Runs earned by Situational Strategy",
+       y = "Number of Play-Off") +
+  theme_bw() +
+  theme(legend.position = "none")
 ```
 
