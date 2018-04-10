@@ -58,21 +58,19 @@ new_stats
 
 #  Visualization of the dataset (Situational Strategy and Run comparison)
 ```{r}
-ggplot(data = new_stats, aes(x = SitStrprop, y = run, color = League)) +
+ggplot(data = new_stats, aes(x = SitStrprop, y = run)) +
   geom_smooth(method = "lm", se = FALSE) +
   stat_density2d(aes(fill = ..density..), geom = "tile",
                 contour = FALSE) +
   scale_fill_gradient2(low = "#4682B4", high = "grey", mid = "#ff8c00", midpoint = 0.005) +
-  geom_point(size = 3) +
-  #facet_wrap(~League) +
-  geom_smooth(method = "lm", span = 2, se = FALSE) +
-  #theme(legend.position = "none") +
+  geom_text(aes(label = Team), size = 2.5) +
+  facet_wrap(~League) +
+  #geom_smooth(method = "lm", span = 2, se = FALSE) +
+  theme(legend.position = "none") +
   labs(title = "Does Implementation of Situational Strategy work?",
        subtitle = "each point represents the average of 10 seasons (2008-2017)",
-       caption = "Source: baseball-reference.com",
-       x = "Reliance on Situational Strategy to earn runs (%)",
-       y = "Average of Total Runs scored") +
-  theme_bw()
+       x = "Use of Situational Strategy to earn runs (%)",
+       y = "Average of Total Runs scored")
 ```
 
 *  Now that we created a variable that measures runs earned from implementing situational strategy, we tried to see if situational strategy actually contributes to the increase in the total runs. According to the graph that visualizes the correlation between the reliance on situational strategy and total runs, we can identify that regardless of different types of Leagues, teams that relatively score less runs in the game tend to rely more on using situational strategy to score runs. Between American League and National League, American League teams tend to be less reliant on situational strategy when compared to the National League teams. Considering the National League rule that pitchers have to participate in the batting order, whereas American League allows designated hitter (a powerful hitter who is specifically talented in generating hits and RBIs) instead of having pitchers in the batting order, there exists a definite difference in the extent of relying on situational strategy. One other explanation for this difference is that American League teams tend to put more emphasis on hitting than pitching.
@@ -88,34 +86,14 @@ ggplot(data = new_stats, aes(x = SitStrprop, y = rank)) +
   geom_smooth(method = "lm", se = TRUE, aes(color = League)) +
   facet_wrap(~ League) +
   theme(legend.position = "none") +
-  labs(title = "Correlation between Situational Strategy Reliance and overall Ranking",
+  scale_color_manual(values = c("blue","orange")) +
+  labs(title = "Correlation between Situational Strategy Usage and overall Ranking",
        subtitle = "each team's ranking is calculated by the average of 10 seasons (2008-2017)",
-       caption = "Source: baseball-reference.com",
-       x = "Reliance on Situational Strategy to earn runs (%)",
+       x = "Use of Situational Strategy to earn runs (%)",
        y = "10 seasons of overall Ranking") +
-  theme_bw() +
+      scale_y_reverse() +
   theme(legend.position = "none")
 ```
 
 *  Now that we know American League teams tend to put less emphasis on the implementation of situational strategy to earn runs, we decided to look at the MLB teams' correlation between the reliance on situational strategy and their average ranking througout 10 years of season. In the American League, among teams, there is no definite correlation between situational strategy and ranking. However, for the National League, many teams that fail to perform well during the regular season tend to focus heavily on implementing situational strategy. Considering the fact that National League teams tend to be relatively weaker at batting than the American League teams, they tend to use more situational strategy to earn runs instead of letting the batters to either go for a hit or a homerun. Thus, by looking at this graph, we could see that American League tend or tend not to rely on situational strategy (depending on the coaching staffs' style) whereas National League teams tend to value situational strategy greatly, especially if their teams are not performing well in the regular season.  
 
-# Situational Strategy and Post-Season
-```{r}
-ggplot(data = new_stats, aes(x = SitStrprop, y = playoff)) +
-  #stat_density2d(aes(fill = ..density..), geom = "tile",
-                #contour = FALSE, h = c(10,1)) +
-  #scale_fill_gradient(low = "white", high = "yellow") +
-  geom_point(aes(color = League), alpha = 0.5) +
-  geom_smooth(method = "lm", se = TRUE, aes(color = League)) +
-  #facet_wrap(~ League) +
-  theme(legend.position = "none") +
-  labs(title = "Correlation between Situational Strategy Reliance and Play-Off Qualification",
-       subtitle = "Number of times each team qualified to Play-Off (2008-2017)",
-       caption = "Source: baseball-reference.com",
-       x = "Reliance on Situational Strategy to earn runs (%)",
-       y = "Number of times qualified to the Play-Off") +
-  theme_bw() +
-  theme(legend.position = "bottom")
-```
-
-*  From previous analysis, we investigated how reliance on Situational Strategy differs by the regular season ranking. Now, we are trying to see if there is a correlation between Situational Strategy and the number of teams qualified for the play-offs. According to the graph, there is no significant difference between American League and National League in terms of play-off qualification as the confidence band overlaps greatly. Also, there is no pattern between these two variables, which indicate that teams that are qualified for the play-offs tend or tend not to heavily rely on the implementation of Situational Strategy. Thus, it is interesting that there is no correlation between the number of times teams were qualified for the play-offs and their reliance on Situational Strategy.
