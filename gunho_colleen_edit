@@ -1,0 +1,29 @@
+# Heatmap
+ggplot(data = new_stats, aes(x = SitStrprop, y = run)) +
+  geom_smooth(method = "lm", se = FALSE) +
+  stat_density2d(aes(fill = ..density..), geom = "tile",
+                 contour = FALSE) +
+  scale_fill_gradient2(low = "#0e58c4", high = "grey", mid = "#ff8c00", midpoint = 0.005) +
+  geom_text(aes(label = Team), size = 2.5) +
+  facet_wrap(~ League) + theme_bw() + 
+  theme(legend.position = "none", panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  labs(title = str_wrap("Reliance on Situational Strategy to Score Points in 
+                        Lower-Scoring Teams of National League, No Pattern 
+                        Among Teams of American League"),
+       x = "Use of Situational Strategy to Score Runs (%)",
+       y = "Average of Total Runs Scored")
+
+# Correlation graph
+ggplot(data = new_stats, aes(x = SitStrprop, y = rank)) +
+  geom_text(aes(label = Team, color = League)) +
+  geom_smooth(method = "lm", se = TRUE, aes(color = League)) +
+  facet_wrap(~ League) +
+  theme(legend.position = "none") +
+  scale_color_manual(values = c("#0e58c4", "#ff6600")) +
+  labs(title = str_wrap("Opposite Correlation Between Situational Strategy 
+                        Usage & Average Ranking in Leagues"),
+       x = "Use of Situational Strategy to Score Runs (%)",
+       y = "Average Ranking (Over 10 Seasons)") +
+  scale_y_reverse() +
+  theme(legend.position = "none")
