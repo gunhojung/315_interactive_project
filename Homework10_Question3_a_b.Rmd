@@ -1,0 +1,28 @@
+#  Problem 3
+
+a. 
+```{r}
+set.seed(4)
+rand_ts <- rnorm(1000)
+acf(rand_ts, plot = FALSE)
+```
++ Overall, this is true, but there is one outlier autocorrelation at 0.
++ This makes sense because a series will always be perfectly correlated with 
+itself.
+
+b. 
+```{r}
+acf(rand_ts, plot = TRUE)
+```
+
++ Other than the lag line located at 0, yes, it appears that there is one 
+autocorrelation at 10 that is significantly different from zero in the plot. 
+There is another autocorrelation located at 22 that is just barely touching the 
+dotted blue line, which may or may not be statistically significant.
++ Yes, this makes sense because with a normal distribution, there is a 95% 
+chance that the normal distribution will fall within 2 standard deviations of
+the mean, and therefore, a 5% chance that it will not (leading to a lag line
+that crosses the blue dotted line). Here, we see 30 different lags represented.
+Out of the 30 lags, we would assume that an average of 1.5 would show a 
+statistically significan correlation, meaning that having one to two lag lines
+crossing the blue line should be expected.
