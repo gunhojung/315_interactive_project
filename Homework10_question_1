@@ -1,0 +1,69 @@
+#  Problem 1
+
+(40 points)
+
+**Undirected Network of _Love Actually_ Characters**
+
+a. *(0 points)  Read [this article from FiveThirtyEight](https://fivethirtyeight.com/features/the-definitive-analysis-of-love-actually-the-greatest-christmas-movie-of-our-time/).*
+
+b. *(5 points)  Load the _Love Actually_ adjacency matrix from [FiveThirtyEight's GitHub Page](https://raw.githubusercontent.com/fivethirtyeight/data/master/love-actually/love_actually_adjacencies.csv). We store this in an object called `love_adjacency`, using the code below.*
+
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+love_adjacency <- read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/love-actually/love_actually_adjacencies.csv")
+```
+
+c. *(5 points)  Read about the `ggraph` package [here](http://www.data-imaginist.com/2017/Announcing-ggraph/).  What does it do?  What `ggplot()`-like function can you use with `ggraph`?*  
+
+*  ggraph is an extension of the ggplot2 API to support relational data such as
+networks and trees. It is the most powerful way to create static network based
+visualizations in R. 
+
+*  Instead of ggplot() function, we can create a network visualizations by using
+ggraph() function. Also, there are many similarities such as for the theme, we
+can use theme_graph(), and for the facet_wrap() function in ggplot, we can use 
+facet_nodes() and facet_edges() function. For facet_grid() function in ggplot,
+we can use facet_graph() which takes the behavior of facet_nodes() and facet_
+edges() combined.
+
+d. *(15 points)  Create a basic network diagram of the _Love Actually_ data using the `ggraph` package and looking at the code in the article posted in part (c) above. Below we define the vector of actor names, `actor_names`, and the graph object, `LA_graph`. Take into consideration the following for building the visualization:*
+
++ *The `LA_graph` object needs to be used in the `ggraph()` function* 
++ *Use the `'kk'` layout in `ggraph()` (which uses the spring-based algorithm by Kamada and Kawai to place nodes)*
++ *The edges can be added with `geom_edge_label()`*
++ *The actor names will be used as an aesthetic to label the nodes using the `geom_node_label()` function*
++ *If the actor names are too big, you can format them using the `size` argument in `geom_node_label()`*
++ *Remove tick marks for both the x and y axis* 
+
+```{r, fig.width = 10, warning = FALSE, message = FALSE}
+library(igraph)
+library(ggraph)
+actor_names <- love_adjacency[,1]
+LA_graph <- graph_from_adjacency_matrix(as.dist(love_adjacency[,-1]))
+ggraph(LA_graph, layout = "kk") +
+  geom_edge_link() +
+  geom_node_label(aes(label = actor_names), size = 2.5) +
+  ggtitle("Network Diagram of Love Actually Actors") +
+  labs(caption = "Source: FiveThirtyEight.com Github Page") +
+  theme_graph(background = "#e55f00", text_colour = "white")
+```
+
+e. *(15 points)  Repeat part (d), but now:*
+
+* *Use a weighted graph, where the width of each edge shows the number of scenes in which those characters appear together. The code below will transform the adjacency matrix into a weighted graph structure, containing a `weight` variable. You should map the `weight` variable to the `edge_width` aesthetic inside `geom_edge_label()`.*
+* *Change the `range` argument of `scale_edge_width()` so that the thinnest edges have width 0.5 and the thickest have width 3.*
+* *Use another layout of your choice. See the help file for `layout_igraph_auto` which lists other layout options besides `kk`.*
+
+```{r, message = FALSE, warning = FALSE, fig.width = 10}
+actor_names <- love_adjacency[,1]
+LA_graph <- graph_from_adjacency_matrix(as.dist(love_adjacency[,-1]))
+LA_graph_weighted <- graph_from_adjacency_matrix(as.matrix(love_adjacency[,-1]),
+                                        weighted = TRUE)
+ggraph(LA_graph_weighted, layout = "lgl") +
+  geom_edge_link(aes(edge_width = weight)) +
+  scale_edge_width(range = c(0.5, 3)) +
+  geom_node_label(aes(label = actor_names), size = 2.5) +
+  ggtitle("Network Diagram of Love Actually Actors") +
+  labs(caption = "Source: FiveThirtyEight.com Github Page") +
+  theme_graph(background = "#e55f00", text_colour = "white")
+```
