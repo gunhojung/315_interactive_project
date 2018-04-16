@@ -1,0 +1,46 @@
+
+c. *(10 points)  Create two autocorrelation plots of the `trips_per_day_usertype` time series:  One for subscribers, and one for customers. First, we create the two autocorrelation time series.*
+
+```{r, warning = FALSE, message = FALSE}
+bike_customer_acf <- acf(filter(trips_per_day_usertype,
+                               usertype == "Customer")$n_trips,
+                        plot = FALSE)
+bike_subsciber_acf <- acf(filter(trips_per_day_usertype,
+                                usertype == "Subscriber")$n_trips,
+                         plot = FALSE)
+```
+
+*And then we generate the both of them using ggplot. Here below we only generate the plot for the customer auto correlation function.*
+
+```{r}
+bike_customer_acf_df <- with(bike_customer_acf, data.frame(lag, acf))
+ggplot(bike_customer_acf_df, aes(x = lag, y = acf)) + geom_col() +
+  labs(title = "Autocorrelation of trips per day for Citi bike customers",
+       x = "Lag (in days)",
+       y = "Autocorrelation",
+       caption = "Source: NYC Citi bike data")
+```
+
+*Generate the autocorrelation plot for the subscribers as well.*
+
+```{r}
+bike_subscriber_acf_df <- with(bike_subsciber_acf, data.frame(lag, acf))
+ggplot(bike_subscriber_acf_df, aes(x = lag, y = acf)) + geom_col() +
+  labs(title = "Autocorrelation of trips per day for Citi bike subscribers",
+       x = "Lag (in days)",
+       y = "Autocorrelation",
+       caption = "Source: NYC Citi bike data")
+```
+
+*Add to **both** plots*:
+
++ *An appropriate title*
++ *An appropriate source*
++ *Appropriate axis labels*
+
+*In both time series, you should see that the ACF has its greatest peak at `lag=7`. How do you interpret this, considering that we computed the ACFs on daily-level data? Does it make sense, given the context of the data (number of rental bike trips per day)?*
+
+This means that the ACF has its greatest peak 7 days (or 1 week) from the 
+baseline. In other words, the number of rental bike trips per day for customers 
+and subscribers is most correlated with itself at this point. This makes sense
+considering weekly patterns in bike usage.
