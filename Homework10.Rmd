@@ -1,0 +1,378 @@
+---
+title: "36-315 Homework 10, Spring 2018"
+author: "[Names and Andrew IDs of all members of your Group]"
+date: "Due Wednesday, April 18, 2018 (11:59pm) on Canvas"
+output: 
+  html_document:
+    toc:  true
+    toc_float:  true
+    code_folding:  show
+---
+
+#  Homework 10: An Interesting Duo - Networks and Time Series
+
+***
+***
+
+***General instructions for all assignments***: 
+
++ Use this file as the template for your submission.
++ Upload your edited `R` Markdown file **and** the knitted .html file, to the Homework 10 submission section on Canvas. (If you cannot upload 2 files at once to Canvas in Chrome, try another browser such as Firefox.). You want to name the .Rmd with all the Andrew IDs of the groups in the filename - e.g. [AndrewID1]-[AndrewID2]-[AndrewID3]-[AndrewID4]-Homework10.Rmd if the group was made of four members. **If you do not include both the .Rmd and .html files, you will automatically lose 10 points.**
++ The instructor and TAs will run your .Rmd file on their computers. **If your .Rmd file does not knit on our computers, you will automatically lose 10 points.**
++ Your file should contain the code to answer each question in its own code block. Your code should produce plots/output that will be automatically embedded in the output (.html) file
++ Each answer must be supported by written statements (unless otherwise specified)
++ Include the full names and Andrew IDs of the members of your group in Problem 0.
++ Include names of classmates with whom you have collaborated in Problem 0 - outside the ones from your group.
++ Include the style guide you used in Problem 0. **If you do not include and follow a style guide, you will automatically lose 10 points.**
+
+
+***
+***
+
+# Problem 0
+
+**Administrative checklist**
+
+*Please remember to take care of the following things not to lose points in your submission:*
+
+* *Put brief but informative titles, labels, etc. on each graph*
+* *Submit **both** .html and .Rmd file*
+* *Check that you submitted the right files (this assignment & this class)*
+* *If you embed an image locally, submit that image as well with the same name you use in the .Rmd file*
+
+*Keep just one:*
+
+* "We used Google's R style guide."
+* "We used Hadley Wickham's R style guide."
+
+*Keep just those that apply, and fill in details as needed:*
+
+* "This submission is for the following group: ______[list names and AndrewIDs]______
+* "We worked with _____[list names]_____ on this assignment, outside of the member of this group."
+* "We received assistance from _____[list campus resource(s)]_____ on this assignment."
+
+***
+***
+
+
+#  Problem 1
+
+(40 points)
+
+**Undirected Network of _Love Actually_ Characters**
+
+a. *(0 points)  Read [this article from FiveThirtyEight](https://fivethirtyeight.com/features/the-definitive-analysis-of-love-actually-the-greatest-christmas-movie-of-our-time/).*
+
+b. *(5 points)  Load the _Love Actually_ adjacency matrix from [FiveThirtyEight's GitHub Page](https://raw.githubusercontent.com/fivethirtyeight/data/master/love-actually/love_actually_adjacencies.csv). We store this in an object called `love_adjacency`, using the code below.*
+
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+love_adjacency <- read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/love-actually/love_actually_adjacencies.csv")
+```
+
+c. *(5 points)  Read about the `ggraph` package [here](http://www.data-imaginist.com/2017/Announcing-ggraph/).  What does it do?  What `ggplot()`-like function can you use with `ggraph`?*  
+
+d. *(15 points)  Create a basic network diagram of the _Love Actually_ data using the `ggraph` package and looking at the code in the article posted in part (c) above. Below we define the vector of actor names, `actor_names`, and the graph object, `LA_graph`. Take into consideration the following for building the visualization:*
+
++ *The `LA_graph` object needs to be used in the `ggraph()` function* 
++ *Use the `'kk'` layout in `ggraph()` (which uses the spring-based algorithm by Kamada and Kawai to place nodes)*
++ *The edges can be added with `geom_edge_label()`*
++ *The actor names will be used as an aesthetic to label the nodes using the `geom_node_label()` function*
++ *If the actor names are too big, you can format them using the `size` argument in `geom_node_label()`*
++ *Remove tick marks for both the x and y axis* 
+
+```{r, warning = FALSE, message = FALSE}
+#install.packages('igraph')
+#install.packages('ggraph')
+library(igraph)
+library(ggraph)
+
+actor_names <- love_adjacency[,1]
+LA_graph <- graph_from_adjacency_matrix(as.dist(love_adjacency[,-1]))
+```
+
+e. *(15 points)  Repeat part (d), but now:*
+
+* *Use a weighted graph, where the width of each edge shows the number of scenes in which those characters appear together. The code below will transform the adjacency matrix into a weighted graph structure, containing a `weight` variable. You should map the `weight` variable to the `edge_width` aesthetic inside `geom_edge_label()`.*
+* *Change the `range` argument of `scale_edge_width()` so that the thinnest edges have width 0.5 and the thickest have width 3.*
+* *Use another layout of your choice. See the help file for `layout_igraph_auto` which lists other layout options besides `kk`.*
+
+```{r}
+LA_graph_weighted <- graph_from_adjacency_matrix(as.matrix(love_adjacency[,-1]),
+                                        weighted = TRUE)
+```
+
+
+***
+***
+
+#  Problem 2
+
+(40 points)
+
+**Time Series and Dates in `ggplot()`**
+
+Note:  Almost all code for this problem is given to you already.  Please take time to understand what the code does!  
+
+a. *(5 points)  In this problem, we'll be using data from the NYC Citi Bike program.  The NYC Citi Bike data is a tremendous resource.  We highly encourage you to explore the data on your own.  The large version of this dataset is at the following link:  [https://raw.githubusercontent.com/mateyneykov/315_code_data/master/data/big_bike.csv]*
+
+*However, because this dataset is so large, we focus on only a small subset from June 2016 for this assignment, to ensure no one has issues accessing and/or loading in the original raw data files.
+Additional information about the NYC Citi Bike data can be found [here](https://www.citibikenyc.com/system-data).*  
+
+*Create a new variable, `start_date`, by transforming `starttime` with the following code:*
+
+```{r, warning = F, message = F}
+library(tidyverse)
+
+# Only use the June 2016 subset
+bike <- read_csv("https://github.com/mateyneykov/315_code_data/raw/master/data/nyc-citi-bike-data-subset.csv")
+#  Add start_date variable
+bike <- mutate(bike,
+               start_date = as.Date(starttime, format = "%m/%d/%Y"))
+```
+
++  *How many rows and columns are in the result?*  
+
+4359 rows / 17 columns
+
++  *What are the minimum and maximum bike trip dates?*
+
+Minimum: 2016-06-01
+Maximum: 2016-06-30
+
+
+b. *(15 points).  Let's plot the number of trips over time.  First, we need to calculate the number of trips on any given day.  This is easy with the `dplyr` package.  Using the code below, we now have a new data frame (called `trips_per_day`).  We can use it to create a nice time series plot with `ggplot()`, `geom_line()`, and `scale_x_date()` to properly format the x-axis:*
+
+```{r, warning = FALSE, message = FALSE}
+#  Summarize bike, creating a new data.frame that includes the number 
+#  of trips taken on each day
+
+trips_per_day <- bike %>%
+  group_by(start_date) %>%
+  summarize(n_trips = n())
+
+#  Create a time series plot with the dates on the x-axis and the number of
+#  trips per day on the y-axis
+
+ggplot(trips_per_day, aes(x = start_date, y = n_trips)) + 
+  geom_line() + 
+  scale_x_date() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "Start Date",
+       y = "Number of Trips") +
+  ggtitle("Number of Trips over Time")
+```
+
+*Add the following to the plot above:*
+
++ *Add an appropriate title*
++ *Add appropriate axis labels*
++ *Use `scale_x_date()` to format the x-axis ticks such that they appear **once a week** and show the **month and day**. For instance: "June 06", "June 13", etc. (Hint: look at the Lecture 19 notes and check the documentation for `strptime` on how to format dates in R.)*
++ *Tilt the x ticks marks by 45 degrees for better legibility. (Hint: look again at the Lecture 19 notes on how `element_text` was used in the `theme` function.)*
+
+
+c. *(5 points)  Repeat part (b), but this time, split the time series into subscribers and customers in the `usertype` variable, and color by the `usertype` variable. As usual, we set the color aesthetics to map to the `usertype` variable to achieve this.*
+
+```{r, warning = FALSE, message = FALSE}
+#  Summarize bike, creating a new data.frame that includes the number 
+#  of trips taken on each day, split by usertype
+trips_per_day_usertype <- bike %>%
+  group_by(start_date, usertype) %>%
+  summarize(n_trips = n())
+
+#  Create a time series plot with the dates on the x-axis and the number of
+#  trips per day on the y-axis, split by usertype
+
+ggplot(trips_per_day_usertype, aes(x = start_date, y = n_trips, color = usertype)) + 
+  geom_line() + 
+  scale_x_date() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "Start Date",
+       y = "Number of Trips",
+       color = "User Type") +
+  ggtitle("Number of Trips over Time by User Type")
+```
+
+*Again, as in part (b), add the following to the plot above:*
+
++ *Add an appropriate title*
++ *Add appropriate axis labels*
++ *Use `scale_x_date()` to format the x-axis ticks to appear once a week, showing the month and day*
++ *Tilt the x ticks marks by 45 degrees for better legibility*
+
+*Which time series appears to have more fluctuation / variability? The customers or the subscribers? Does this make sense, considering that "subscribers" are annual members while "customers" are those who just bought a 24-hour or 3-day pass?*
+
+* The customer time series appears to have more fluctuation / variablity. This makes sense since subsribers have already commited to the program and will use bikes more constantly than customers who have only committed short-term and thus, their number of trips will fluctuate more.
+
+
+d. *(15 points) As you have seen in class, the function `stat_rollapplyr()` of the package `ggseas` can compute moving average trend lines for a time series.*
+
+*Following the Lecture 19 notes, give arguments to `stat_rollapplyr()` to compute a moving average with a 7-day window, right-aligned. Also make the moving-average trend lines thicker than the underlying data trend lines.*
+
+```{r, warning=F, message=F}
+#install.packages('ggseas')
+library(ggseas)
+
+ggplot(trips_per_day_usertype, aes(x = start_date, y = n_trips, color = usertype)) + 
+  geom_line() +
+  scale_x_date() +
+  stat_rollapplyr(width = 7, align = "right", size = 2) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x = "Start Date",
+       y = "Number of Trips",
+       color = "User Type") +
+  ggtitle("Number of Trips over Time by User Type with Moving Average Trend Lines")
+```
+
+*Again, as in parts (b-c), add the following to the plot above:*
+
++ *Add an appropriate title*
++ *Add appropriate axis labels*
++ *Use `scale_x_date()` to format the x-axis ticks to appear once a week, showing the month and day*
++ *Tilt the x ticks marks by 45 degrees for better legibility*
+
+*Which time series' **moving average** appears to have more fluctuation / variability?*
+
+Customer Time Series' moving average appears to have more fluctuation / variablility.
+
+***
+***
+
+
+#  Problem 3
+
+(20 points)
+
+**Understanding Autocorrelations and Autocorrelation Plots**
+
+a. *(5 points)  Autocorrelations are just the correlation of a time series with itself at different lags.  Let's start by looking at a totally random, made up time series:  `rand_ts <- rnorm(1000)`.  This is just a bunch of random numbers from a Normal(0, 1) distribution.  Use `acf(rand_ts, plot = FALSE)` to look at the correlation of the "time series" and itself at different lags.  Since this "time series" is just 1000 random draws from a Normal(0, 1) distribution, most of the autocorrelations should be near zero.*
+
++  *Is this true?*  
++  *Which autocorrelation is NOT near zero?*  
++  *Does this make sense?  Why or why not?*
+
+b. *(5 points) Autocorrelation plots show the correlation between the time series and itself at all of the different possible lags.  The (auto)correlations are plotted on the y-axis, and the lags are shown on the x-axis.  Create an autocorrelation plot of the random time series from (a), using base R graphics.  To do this, just type `acf(rand_ts, plot = TRUE)`.  In the resulting plot, the blue dotted lines indicate statistical significance.  Any correlation above the positive blue line or below the negative blue line is significantly different from zero.*
+
++  *Are any of the autocorrelations significantly different from zero in your plot?*  
++  *Does this make sense?  Why or why not?*
+
+
+c. *(10 points)  Create two autocorrelation plots of the `trips_per_day_usertype` time series:  One for subscribers, and one for customers. First, we create the two autocorrelation time series.*
+
+```{r, warning = FALSE, message = FALSE}
+#bike_customer_acf <- acf(filter(trips_per_day_usertype,
+#                                usertype == "Customer")$n_trips,
+#                         plot = FALSE)
+#bike_subsciber_acf <- acf(filter(trips_per_day_usertype,
+#                                 usertype == "Subscriber")$n_trips,
+#                          plot = FALSE)
+```
+
+*And then we generate the both of them using ggplot. Here below we only generate the plot for the customer auto correlation function.*
+
+```{r}
+#bike_customer_acf_df <- with(bike_customer_acf, data.frame(lag,acf))
+#ggplot(bike_customer_acf_df, aes(x = lag, y= acf)) + geom_col()
+```
+
+*Generate the autocorrelation plot for the subscribers as well.*
+
+*Add to **both** plots*:
+
++ *An appropriate title*
++ *An appropriate source*
++ *Appropriate axis labels*
+
+*In both time series, you should see that the ACF has its greatest peak at `lag=7`. How do you interpret this, considering that we computed the ACFs on daily-level data? Does it make sense, given the context of the data (number of rental bike trips per day)?*
+
+***
+***
+
+
+#  Problem 4 (optional, ungraded)
+
+(0 points)
+
+This is an optional practice problem, designed to teach you how to (1) use `igraph` to compute simple statistics on a network dataset, (2) make plots with the `ggnetwork` package instead of `ggraph`, and (3) graph a directed network instead of Problem 1's undirected network.
+
+We encourage you to do this practice problem, especially if you are using a network dataset for your poster project, but no credit will be given for submitting it.
+
+**Directed networks, `igraph`, and `ggnetwork`**
+
+The `igraph` package makes network analysis easy!  Install and load the `igraph` and `igraphdata` packages.  Load the `UKfaculty` network into `R`:
+
+```{r, warning = FALSE, message = FALSE}
+#install.packages("igraph")
+#install.packages("igraphdata")
+library(igraph)
+library(igraphdata)
+data(UKfaculty)
+```
+
+
+a. Try out some of the built-in functions in the `igraph` package in order to summarize the UK faculty network:
++ How many nodes ("vertices") are in the network?  (Hint: use `vcount()`.)  
++ How many edges ("links") are in the network?  (Hint: use `ecount()`.)
+
+b. Each of the node of this network is the personal friendship network of a faculty of a UK university. In order to get a vector of the node labels, you can use the function `V()`. Save this vector as `graph_node_label`.
+
+c. The `igraph` package has some built-in functions for analyzing both the in-degree and out-degree of the nodes in the network. Use the `igraph` function `degree` to get:
+
++ The in-degrees of all nodes. Save them as `in_degree_count`. (Hint: set the `mode` argument as `'in'` in the `degree` function)
++ The out-degrees of all nodes. Save them as `out_degree_count`. (Hint: set the `mode` argument as `'out'` in the `degree` function)
+
+Partial code is provided below.
+
+```{r}
+in_degree_count <- degree(UKfaculty, mode = "in")
+
+# Also compute out_degree_count here
+```
+
+
+d. Create now a dataframe with the three vectors created above, containing the nodes labels, in-degrees, and out-degrees respectively. (You may need to `cbind()` the vectors together, then save the result as a data frame.) Create a scatterplot of the in-degrees versus the out-degrees and comment on whether there seems to be any relationship between the two.
+
+e. Let's actually visualize the network itself!  Install and load the `ggnetwork` package.  This package is decently new (you can read more about how to use it [in this article on the package](http://www.r-bloggers.com/ggnetwork-network-geometries-for-ggplot2/).
+
+You'll also need to install and load the `intergraph` package in order to use `igraph` objects with `ggnetwork`.  Finally, depending on which version of `ggplot2`, `R`, and RStudio you're running, you may need to update your packages to the latest versions that are on GitHub (see the first commented lines of code below).
+
+Visualize the UK faculty network using the code below.
+Be sure to:
+
++ Add a title
++ Add a caption 
++ Remove the x- and y-axis labels
++ Remove the x- and y-axis tick marks
++ Adjust the `color` legend
++ Adjust the `size` legend
+
+```{r, warning = FALSE, message = FALSE}
+## Run these only if install.packages() does not work for you
+#devtools::install_github("briatte/ggnetwork")
+#devtools::install_github("mbojan/intergraph")
+
+library(ggnetwork)
+library(intergraph)
+
+uk_data <- fortify(UKfaculty)
+uk_in_degrees <- in_degree_count[match(uk_data$vertex.names,
+                                       1:length(in_degree_count))]
+uk_data$in_degree <- uk_in_degrees
+ggplot(uk_data, 
+       aes(x, y, xend = xend, yend = yend)) +
+  geom_edges(arrow = arrow(length = unit(0.3, "lines")), 
+             aes(color = as.factor(Group)), alpha = 0.5) +
+  geom_nodetext(aes(label = vertex.names, size = in_degree * 1.5), 
+                color = "blue", fontface = "bold")
+```
+
+f. Look at the network plot above:
+
++ How many groups ("cliques") do there appear to be?  
++ What does the size of the nodes correspond to?  
++ What does the color of the edges correspond to?  
++ Is the graph a directed or an undirected graph?
+
+***
+***
+
