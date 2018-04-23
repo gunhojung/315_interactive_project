@@ -1,0 +1,242 @@
+---
+title: "36-315 Homework 11, Spring 2018"
+author: "[Names and Andrew IDs of all members of your Group]"
+date: "Due Wednesday, April 25, 2018 (11:59pm) on Canvas"
+output: 
+  html_document:
+    toc:  true
+    toc_float:  true
+    code_folding:  show
+runtime: shiny
+---
+
+#  Homework 11: Interaction
+
+***
+***
+
+***General instructions for all assignments***: 
+
++ Use this file as the template for your submission.
++ Upload your edited `R` Markdown file **only** (no knitted .html file this week!), to the Homework 11 submission section on Canvas. You want to name the .Rmd with all the Andrew IDs of the groups in the filename - e.g. [AndrewID1]-[AndrewID2]-[AndrewID3]-[AndrewID4]-Homework11.Rmd if the group was made of four members.
++ The instructor and TAs will run your .Rmd file on their computers. **If your .Rmd file does not run on our computers, you will automatically lose 10 points.**
++ Your file should contain the code to answer each question in its own code block. Your code should produce plots/output that will be automatically embedded in the output
++ Each answer must be supported by written statements (unless otherwise specified)
++ Include the full names and Andrew IDs of the members of your group in Problem 0.
++ Include names of classmates with whom you have collaborated in Problem 0 - outside the ones from your group.
++ Include the style guide you used in Problem 0. **If you do not include and follow a style guide, you will automatically lose 10 points.**
+
+
+***
+***
+
+# Problem 0
+
+**Administrative checklist**
+
+*Please remember to take care of the following things not to lose points in your submission:*
+
+* *Put brief but informative titles, labels, etc. on each graph*
+* *Submit **both** .html and .Rmd file*
+* *Check that you submitted the right files (this assignment & this class)*
+* *If you embed an image locally, submit that image as well with the same name you use in the .Rmd file*
+
+*Keep just one:*
+
+* "We used Google's R style guide."
+* "We used Hadley Wickham's R style guide."
+
+*Keep just those that apply, and fill in details as needed:*
+
+* "This submission is for the following group: ______[list names and AndrewIDs]______
+* "We worked with _____[list names]_____ on this assignment, outside of the member of this group."
+* "We received assistance from _____[list campus resource(s)]_____ on this assignment."
+
+***
+***
+
+The following problems are based on the first example from RStudio's [Interactive Documents](https://rmarkdown.rstudio.com/authoring_shiny.html) page. We will show a histogram and density plot for the Old Faithful dataset, and we will allow users to control the binwidth and bandwidth interactively.
+
+Read the Old Faithful documentation file using `?faithful` to see what its variables and observations are.
+
+As far as I can tell, the data were recorded in order across about 2 weeks. Just so that we can add a continuous variable to the dataset, let's assume that about half of the observations were taken during each week.
+
+```{r}
+faithful$week <- rep(c("Week 1", "Week 2"), each = 136)
+```
+
+# Problem 1: Shiny Outputs
+
+(20 points)
+
+We will practice running a Shiny app and converting base R graphs to `ggplot2` equivalents.
+
+You can embed Shiny inputs and outputs in your document. Outputs are automatically updated whenever inputs change.  This demonstrates how a standard R plot can be made interactive by wrapping it in the Shiny `renderPlot` function. The `selectInput` and `sliderInput` functions create the input widgets used to drive the plot.
+
+*a. (0 points)  Run the existing app by clicking the "Run Document" button in RStudio. Play with the two inputs (dropdown and slider). Can you find a combination of histogram binwidth and density bandwidth adjustment for which the histogram and density plot look similar?*
+
+```{r base_r, echo=FALSE}
+
+```
+
+*b. (20 points)  Modify the code below, so that the histogram and density plot are drawn using `ggplot2` instead of base R graphics. You only need to replace what's inside `renderPlot({...})`.*
+
+* *Make a single call to `ggplot()`, specifying the `faithful` dataset. Map the `eruptions` variable to the x aesthetic, and map `..density..` to the y-aesthetic so the histogram and density plots will have the same scale.*
+* *Add the two geoms. Use `input$n_breaks` and `input$bw_adjust` to specify the number of histogram bins and the density bandwidth adjustment.*
+* *Make sure you have an appropriate title, axis labels, and data-source caption.*
+
+```{r ggplot, echo=FALSE, warning=FALSE, message=FALSE}
+
+```
+
+***
+***
+
+# Problem 2: Shiny Inputs
+
+(30 points)
+
+*We will continue to modify the example above. Now, add two more control "widgets" to allow extra inputs. The Shiny Tutorial's [Lesson 3](https://shiny.rstudio.com/tutorial/written-tutorial/lesson3/) has general advice about using widgets.*
+
+* *Add a `radioButtons()` widget which lets you choose whether the `eruptions` or `waiting` variable should be plotted. Use `aes_string()` instead of `aes()` in your plot to use this input for your graph. (**Hint:** See Lecture 22 examples.)*  
+*Also change the plot title depending on which variable is plotted. (**Hint:** Use `ifelse()` inside `labs()`.)*
+* *Also add a `checkboxInput()` widget which lets you toggle whether or not a rug plot is added. (**Hint:** Save the plot without rugs using `p2 <- ggplot(...) + ...`; then use an `if` statement to add a rug to `p2` only if the checkbox was selected; and finally put `p2` as its own line of code to display the final graph.)*
+
+```{r more_inputs, echo=FALSE, warning=FALSE, message=FALSE}
+library(shiny)
+library(ggplot2)
+shinyApp(
+  
+  ui = fluidPage(
+    inputPanel(
+      selectInput("n_breaks", label = "Number of bins:",
+                  choices = c(10, 20, 35, 50), selected = 20),
+  
+      sliderInput("bw_adjust", label = "Bandwidth adjustment:",
+                  min = 0.2, max = 2, value = 1, step = 0.2)
+    ),
+    
+    radioButtons("which_variable", label = "Which variable?",
+                 choices = c("Eruptions" = "eruptions",
+                             "Waiting Time" = "waiting")),
+    
+    checkboxInput("add_rug", label = "Add Rug Plot?"),
+    
+    plotOutput("geyser_plot")
+  ),
+  
+  server = function(input, output) {
+    output$geyser_plot <- renderPlot({
+      p2 <- ggplot(faithful, aes_string(x = input$which_variable, y = "..density..")) +
+        geom_histogram(bins = input$n_breaks) +
+        geom_density(bw = input$bw_adjust) +
+        labs(title = ifelse(input$which_variable == "eruptions",
+                            "Geyser Eruption Duration",
+                            "Geyser Waiting Time"),
+             x = "Time (minutes)",
+             y = "Density",
+             caption = "Source: Old Faithful Dataset ")
+      
+      if(input$add_rug) {
+        p2 <- p2 + geom_rug(stat = "density")
+      }
+      
+      p2
+    })
+  },
+  
+  options = list(height = 550)
+)
+```
+
+
+***
+***
+
+# Problem 3: Plotly
+
+(30 points)
+
+*Plotly is a different way of making interactive plots. Most `ggplot` graphs can be saved and passed into the `ggplotly()` function to automatically get interactive zooming, panning, and tooltips on mouseover. Play with the plot below, then add these two extra features:*
+
+* *Overlay scatterplot points on the graph using `geom_point()`. What information does Plotly display when you hover the mouse over a point? How about when you hover over the density contours but not over a point?*
+* *Also facet the graph by `week`. Try to click & drag **only vertically**, to zoom in on a horizontal slice within one facet. What happens to the other facet? How about if you click & drag **only horizontally**?*  
+*(Eventually, these two kinds of zoom should have the same effect, but apparently it is [still an open issue in Plotly's development](https://community.plot.ly/t/request-to-have-synchronized-axes-for-zoom-pan/3823).)*
+
+```{r plotly, echo=FALSE, warning=FALSE, message=FALSE}
+library(plotly)
+
+p3 <- ggplot(faithful, aes(x = eruptions, y = waiting)) +
+  stat_density_2d(aes(fill = ..level..), geom = "polygon") + 
+  xlim(1, 6) + ylim(40, 100) +
+  geom_point() +
+  facet_wrap(~week)
+
+ggplotly(p3)
+```
+
+
+***
+***
+
+# Problem 4: Plotly within Shiny
+
+(20 points)
+
+*Finally, repeat your Shiny app from Problem 2. However, this time, use Plotly to render the graph, so that you have the best of both worlds: Shiny's interaction around the plot (selecting variables, toggling options, etc.), **and** Plotly's interaction within the plot itself (zooming, mouseover, etc.).*
+
+*Simply copy the contents of your Problem 2 code block below, then make these changes:*
+
+* *`plotOutput()` should become `plotlyOutput()`*
+* *`renderPlot()` should become `renderPlotly()`*
+* *As in Problem 3, save the ggplot output as `p4 <- ggplot(...) + ...`, and then call it using `ggplotly(p4)`*
+
+```{r plotly_in_shiny, echo=FALSE, warning=FALSE, message=FALSE}
+library(shiny)
+library(ggplot2)
+shinyApp(
+  
+  ui = fluidPage(
+    inputPanel(
+      selectInput("n_breaks", label = "Number of bins:",
+                  choices = c(10, 20, 35, 50), selected = 20),
+  
+      sliderInput("bw_adjust", label = "Bandwidth adjustment:",
+                  min = 0.2, max = 2, value = 1, step = 0.2)
+    ),
+    
+    radioButtons("which_variable", label = "Which variable?",
+                 choices = c("Eruptions" = "eruptions",
+                             "Waiting Time" = "waiting")),
+    
+    checkboxInput("add_rug", label = "Add Rug Plot?"),
+    
+    plotlyOutput("geyser_plot")
+  ),
+  
+  server = function(input, output) {
+    output$geyser_plot <- renderPlotly({
+      p2 <- ggplot(faithful, aes_string(x = input$which_variable, y = "..density..")) +
+        geom_histogram(bins = input$n_breaks) +
+        geom_density(bw = input$bw_adjust) +
+        labs(title = ifelse(input$which_variable == "eruptions",
+                            "Geyser Eruption Duration",
+                            "Geyser Waiting Time"),
+             x = "Time (minutes)",
+             y = "Density",
+             caption = "Source: Old Faithful Dataset ")
+      
+      if(input$add_rug) {
+        p2 <- p2 + geom_rug(stat = "density")
+      }
+      
+      ggplotly(p2)
+    })
+  },
+  
+  options = list(height = 550)
+)
+```
+
+***
+***
