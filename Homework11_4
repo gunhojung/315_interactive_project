@@ -1,0 +1,46 @@
+```{r plotly_in_shiny, echo=FALSE, warning=FALSE, message=FALSE}
+shinyApp(
+  
+  ui = fluidPage(
+    inputPanel(
+      selectInput("n_breaks", label = "Number of bins:",
+                  choices = c(10, 20, 35, 50), selected = 20),
+  
+      sliderInput("bw_adjust", label = "Bandwidth adjustment:",
+                  min = 0.2, max = 2, value = 1, step = 0.2)
+    ),
+    
+    radioButtons("which_variable", label = "Which variable?",
+                 choices = c("Eruptions" = "eruptions",
+                             "Waiting Time" = "waiting")),
+    
+    checkboxInput("add_rug", label = "Add Rug Plot?"),
+    
+    plotlyOutput("geyser_plot")
+  ),
+  
+  server = function(input, output) {
+    output$geyser_plot <- renderPlotly({
+      p4 <- ggplot(faithful, aes_string(x = input$which_variable, 
+                                        y = "..density..")) +
+        geom_histogram(bins = input$n_breaks) +
+        geom_density(bw = input$bw_adjust) +
+        labs(title = ifelse(input$which_variable == "eruptions",
+                            "Geyser Eruption Duration",
+                            "Geyser Waiting Time"),
+             x = "Time (minutes)",
+             y = "Density",
+             caption = "Source: Old Faithful Dataset ")
+      
+      if(input$add_rug) {
+        p4 <- p4 + geom_rug(stat = "density")
+      }
+      
+      ggplotly(p4)
+      
+    })
+  },
+  
+  options = list(height = 550)
+)
+```
